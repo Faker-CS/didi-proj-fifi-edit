@@ -101,46 +101,22 @@ Route::put('/admin/orders/{order}/status', [AdminOrderController::class, 'update
 */
 
 
-use App\Models\User;
+use App\Http\Controllers\Auth\AuthenticatedSessionController;
+use App\Http\Controllers\Auth\PasswordResetLinkController;
+use App\Http\Controllers\Auth\NewPasswordController;
 
-Route::post('/login', function (Request $request) {
+// Authentication routes (uses controllers under App\Http\Controllers\Auth)
+Route::get('/login', [AuthenticatedSessionController::class, 'create'])->name('login');
+Route::post('/login', [AuthenticatedSessionController::class, 'store']);
+Route::post('/logout', [AuthenticatedSessionController::class, 'destroy'])->name('logout');
 
-    $request->validate([
-        'email' => 'required|email',
-        'password' => 'required',
-    ]);
+// Registration routes (already defined above for RegisteredUserController)
 
-    $user = User::where('email', $request->email)->first();
-
-    if (!$user) {
-        return back()->withErrors(['email' => 'Utilisateur introuvable']);
-    }
-
-    // ⚠️ comparaison STRING (dangereux)
-    if ($user->password !== $request->password) {
-        return back()->withErrors(['password' => 'Mot de passe incorrect']);
-    }
-
-    // connexion manuelle
-    Auth::login($user);
-    $request->session()->regenerate();
-
-    if ($user->role === 'admin') {
-        return redirect()->route('admin.dashboard');
-    }else {
-        return redirect()->route('client.dashboard');
-    }
-
-    return redirect()->route('login');
-});
-route::post('/logout', function (Request $request) {
-    Auth::logout();
-    $request->session()->invalidate();
-    $request->session()->regenerateToken();
-    return redirect('login');
-})->name('logout');
-
-Route::get('/login', function () { return view('auth.login');})->name('login');
+// Password reset
+Route::get('/forgot-password', [PasswordResetLinkController::class, 'create'])->name('password.request');
+Route::post('/forgot-password', [PasswordResetLinkController::class, 'store'])->name('password.email');
+Route::get('/reset-password', [NewPasswordController::class, 'create'])->name('password.reset');
+Route::post('/reset-password', [NewPasswordController::class, 'store'])->name('password.update');
 
 // Détail produit
 Route::get('/product/{product}', [ProductController::class, 'show'])->name('products.show');

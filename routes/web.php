@@ -76,7 +76,16 @@ Route::prefix('client')->name('client.')->group(function () {
 | CLIENT (PUBLIC)
 |--------------------------------------------------------------------------
 */
-Route::get('/', [HomeController::class, 'index'])->name('client.dashboard');
+// Make root show login page for guests and keep client dashboard accessible when authenticated
+Route::get('/', function () {
+    if (auth()->check()) {
+        return redirect()->route('client.dashboard');
+    }
+    return redirect()->route('login');
+})->name('home');
+
+// Client dashboard route (kept for authenticated users)
+Route::get('/dashboard', [HomeController::class, 'index'])->name('client.dashboard');
 Route::get('/products', [ClientProductController::class, 'index'])->name('client.products');
     Route::get('/products/{product}', [ClientProductController::class, 'show'])->name('client.products.show');
     
